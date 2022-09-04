@@ -1,10 +1,11 @@
 use crate::config::ContainerOpts;
 use crate::errors::Errcode;
+use crate::namespaces::userns;
 
 use nix::sched::clone;
 use nix::sched::CloneFlags;
 use nix::sys::signal::Signal;
-use nix::unistd::Pid;
+use nix::unistd::{close, Pid};
 
 fn child(config: ContainerOpts) -> isize {
     match setup_container_configurations(&config) {
@@ -13,6 +14,10 @@ fn child(config: ContainerOpts) -> isize {
             log::error!("Error while configuring container: {:?}", e);
             return -1;
         }
+    }
+    if let Err(_) = close(config.fd) {
+        log::error!("Error while closing socket ...");
+        return -1;
     }
     log::info!(
         "Starting container with command {} and args {:?}",
@@ -33,6 +38,7 @@ pub fn generate_child_process(config: ContainerOpts) -> Result<Pid, Errcode> {
     flags.insert(CloneFlags::CLONE_NEWIPC);
     flags.insert(CloneFlags::CLONE_NEWNET);
     flags.insert(CloneFlags::CLONE_NEWUTS);
+    flags.insert(CloneFlags::CLONE_NEWUSER);
 
     match clone(
         Box::new(|| child(config.clone())),
@@ -41,15 +47,15 @@ pub fn generate_child_process(config: ContainerOpts) -> Result<Pid, Errcode> {
         Some(Signal::SIGCHLD as i32),
     ) {
         Ok(pid) => Ok(pid),
-        Err(e) => {
-            log::error!("Error while creating child process: {:?}", e.to_string());
-            Err(Errcode::ChildProcessError(0))
-        },
+        Err(e) => Err(Errcode::ChildProcessError(0)),
     }
 }
 use crate::hostname::set_container_hostname;
-
+use crate::mounts::setmountpoint;
 fn setup_container_configurations(config: &ContainerOpts) -> Result<(), Errcode> {
     set_container_hostname(&config.hostname)?;
+    setmountpoint(&config.mount_dir)?;
+    userns(config.fd, config.uid)?;
+
     Ok(())
 }

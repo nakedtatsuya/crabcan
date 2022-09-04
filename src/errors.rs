@@ -10,6 +10,8 @@ pub enum Errcode {
     SocketError(u8),
     ChildProcessError(u8),
     HostnameError(u8),
+    NamespacesError(u8),
+    MountsError(u8),
     RngError,
     ArgumentInvalid(&'static str),
 }

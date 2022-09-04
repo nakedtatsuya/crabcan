@@ -41,7 +41,10 @@ pub fn set_container_hostname(hostname: &String) -> Result<(), Errcode> {
             Ok(())
         }
         Err(e) => {
-            log::error!("Error while setting container hostname: {:?}", e.to_string());
+            log::error!(
+                "Error while setting container hostname: {:?}",
+                e.to_string()
+            );
             log::error!("Cannot set hostname {} for container", hostname);
             Err(Errcode::HostnameError(0))
         }

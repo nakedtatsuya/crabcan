@@ -8,13 +8,13 @@ mod config;
 mod container;
 mod hostname;
 mod ipc;
+mod mounts;
+mod namespaces;
 
 #[macro_use]
 extern crate scan_fmt;
 
 fn main() {
-    // let args = cli::parse_args();
-
     match cli::parse_args() {
         Ok(args) => {
             log::info!("{:?}", args);
