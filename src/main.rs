@@ -2,6 +2,7 @@ mod cli;
 mod errors;
 use errors::exit_with_retcode;
 use std::process::exit;
+mod capabilities;
 mod check_linux_version;
 mod child;
 mod config;
@@ -10,6 +11,7 @@ mod hostname;
 mod ipc;
 mod mounts;
 mod namespaces;
+mod syscalls;
 
 #[macro_use]
 extern crate scan_fmt;

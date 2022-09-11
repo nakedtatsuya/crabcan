@@ -11,12 +11,13 @@ pub fn userns(fd: RawFd, uid: u32) -> Result<(), Errcode> {
     let has_userns = match unshare(CloneFlags::CLONE_NEWUSER) {
         Ok(_) => true,
         Err(e) => {
-            log::error!("======Error while unsharing user namespace: {:?}", e);
+            log::error!(
+                "======Error while unsharing user namespace: {:?}",
+                e.to_string()
+            );
             false
-        },
+        }
     };
-
-    
 
     send_boolean(fd, has_userns)?;
 
@@ -29,11 +30,11 @@ pub fn userns(fd: RawFd, uid: u32) -> Result<(), Errcode> {
         log::info!("User namespaces not supported, continuing...");
     }
 
-    // Switch UID / GID with the one provided by the user
     log::debug!("Switching to uid {} / gid {}...", uid, uid);
     let gid = Gid::from_raw(uid);
     let uid = Uid::from_raw(uid);
     if let Err(e) = setgroups(&[gid]) {
+        log::error!("Error while setting groups: {:?}", e);
         return Err(Errcode::NamespacesError(1));
     }
 

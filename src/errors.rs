@@ -14,6 +14,8 @@ pub enum Errcode {
     MountsError(u8),
     RngError,
     ArgumentInvalid(&'static str),
+    CapabilitiesError(u8),
+    SyscallsError(u8),
 }
 
 #[allow(unreachable_patterns)]

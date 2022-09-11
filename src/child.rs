@@ -1,7 +1,8 @@
+use crate::capabilities::setcapabilities;
 use crate::config::ContainerOpts;
 use crate::errors::Errcode;
 use crate::namespaces::userns;
-
+use crate::syscalls::setsyscalls;
 use nix::sched::clone;
 use nix::sched::CloneFlags;
 use nix::sys::signal::Signal;
@@ -38,7 +39,6 @@ pub fn generate_child_process(config: ContainerOpts) -> Result<Pid, Errcode> {
     flags.insert(CloneFlags::CLONE_NEWIPC);
     flags.insert(CloneFlags::CLONE_NEWNET);
     flags.insert(CloneFlags::CLONE_NEWUTS);
-    flags.insert(CloneFlags::CLONE_NEWUSER);
 
     match clone(
         Box::new(|| child(config.clone())),
@@ -47,7 +47,7 @@ pub fn generate_child_process(config: ContainerOpts) -> Result<Pid, Errcode> {
         Some(Signal::SIGCHLD as i32),
     ) {
         Ok(pid) => Ok(pid),
-        Err(e) => Err(Errcode::ChildProcessError(0)),
+        Err(_) => Err(Errcode::ChildProcessError(0)),
     }
 }
 use crate::hostname::set_container_hostname;
@@ -56,6 +56,7 @@ fn setup_container_configurations(config: &ContainerOpts) -> Result<(), Errcode>
     set_container_hostname(&config.hostname)?;
     setmountpoint(&config.mount_dir)?;
     userns(config.fd, config.uid)?;
-
+    setcapabilities()?;
+    setsyscalls()?;
     Ok(())
 }
